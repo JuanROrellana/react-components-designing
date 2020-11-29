@@ -1,12 +1,62 @@
-import React, {useContext, useState} from 'react';
-import SpeakerContext from "./SpeakerContext";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import SpeakerSearchBar from "../SpeakerSearchBar/SpeakerSearchBar";
 import Speaker from '../Speaker/Speaker';
 
 export default function Speakers()  {
-    const speakers = useContext(SpeakerContext);
+    const REQUEST_STATUS = {
+        LOADING: 'loading',
+        SUCCESS: 'success',
+        ERROR: 'error',
+    };
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [speakers, setSpeakers] = useState([]);
+    const [status, setStatus] = useState(REQUEST_STATUS.LOADING);
+
+    function toggleSpeakerFavorite(speakerRec) {
+        return {
+            ...speakerRec,
+            isFavorite: !speakerRec.isFavorite,
+        };
+    }
+
+    async function onFavoriteToggleHandler(speakerRec) {
+        const toggledSpeakerRec = toggleSpeakerFavorite(speakerRec);
+        const speakerIndex = speakers
+            .map((speaker) => speaker.id)
+            .indexOf(speakerRec.id);
+
+        try {
+            await axios.put(
+                `http://localhost:4000/speakers/${speakerRec.id}`,
+                toggledSpeakerRec,
+            );
+            setSpeakers([
+                ...speakers.slice(0, speakerIndex),
+                toggledSpeakerRec,
+                ...speakers.slice(speakerIndex + 1),
+            ]);
+        } catch (e) {
+            setStatus(REQUEST_STATUS.ERROR);
+            setError(e);
+        }
+    }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('http://localhost:4000/speakers');
+                setSpeakers(response.data);
+                setStatus(REQUEST_STATUS.SUCCESS);
+            } catch (e) {
+                setStatus(REQUEST_STATUS.ERROR);
+                setError(e);
+            }
+        };
+        fetchData();
+    }, []);
+
     return (
         <div>
             <SpeakerSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery}/>
@@ -19,7 +69,7 @@ export default function Speakers()  {
                             : targetString.includes(searchQuery.toLowerCase());
                     })
                     .map((speaker) => (
-                        <Speaker key={speaker.id} {...speaker} />
+                        <Speaker key={speaker.id} {...speaker} onFavoriteToggle={() => onFavoriteToggleHandler(speaker)} />
                     ))}
             </div>
         </div>
