@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import axios from 'axios';
 import SpeakerSearchBar from "../SpeakerSearchBar/SpeakerSearchBar";
 import Speaker from '../Speaker/Speaker';
+
+import {GET_ALL_SUCCESS, GET_ALL_FAILURE, PUT_FAILURE, PUT_SUCCESS} from "../../actions/request";
 
 export default function Speakers()  {
     const REQUEST_STATUS = {
@@ -13,6 +15,7 @@ export default function Speakers()  {
     const [searchQuery, setSearchQuery] = useState('');
     const [speakers, setSpeakers] = useState([]);
     const [status, setStatus] = useState(REQUEST_STATUS.LOADING);
+    const [error, setError] = useState({});
 
     function toggleSpeakerFavorite(speakerRec) {
         return {
