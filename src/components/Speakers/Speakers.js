@@ -3,7 +3,7 @@ import axios from 'axios';
 import SpeakerSearchBar from "../SpeakerSearchBar/SpeakerSearchBar";
 import Speaker from '../Speaker/Speaker';
 
-import {GET_ALL_SUCCESS, GET_ALL_FAILURE, PUT_FAILURE, PUT_SUCCESS} from "../../actions/request";
+import {GET_ALL_SUCCESS, GET_ALL_FAILURE, PUT_FAILURE, PUT_SUCCESS, SPEAKER_URL} from "../../actions/request";
 
 export default function Speakers()  {
     const REQUEST_STATUS = {
@@ -13,8 +13,41 @@ export default function Speakers()  {
     };
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [speakers, setSpeakers] = useState([]);
-    const [status, setStatus] = useState(REQUEST_STATUS.LOADING);
+
+    const reducer = (state, action) => {
+        switch (action.type){
+            case GET_ALL_SUCCESS:
+                return {
+                    ...state,
+                    status: REQUEST_STATUS.SUCCESS,
+                    speakers: action.speakers
+                };
+            case GET_ALL_FAILURE:
+                return {
+                    ...state,
+                    status: REQUEST_STATUS.ERROR,
+                    error : action.error
+                };
+            case PUT_SUCCESS:
+                return {
+                    ...state,
+                    error: action.error
+                };
+            case PUT_FAILURE:
+                return {
+                    ...state,
+                    error: action.error
+                };
+            default:
+                return state;
+        }
+    };
+
+    const [{speakers, status}, dispatch] = useReducer(reducer, {
+        status: REQUEST_STATUS.LOADING,
+        speakers: []
+    });
+
     const [error, setError] = useState({});
 
     function toggleSpeakerFavorite(speakerRec) {
@@ -32,16 +65,19 @@ export default function Speakers()  {
 
         try {
             await axios.put(
-                `http://localhost:4000/speakers/${speakerRec.id}`,
+                SPEAKER_URL`+/${speakerRec.id}`,
                 toggledSpeakerRec,
             );
-            setSpeakers([
+            dispatch([
                 ...speakers.slice(0, speakerIndex),
                 toggledSpeakerRec,
                 ...speakers.slice(speakerIndex + 1),
             ]);
         } catch (e) {
-            setStatus(REQUEST_STATUS.ERROR);
+            dispatch({
+                TYPE: PUT_FAILURE,
+                STATUS: REQUEST_STATUS.ERROR
+            });
             setError(e);
         }
     }
@@ -49,11 +85,16 @@ export default function Speakers()  {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:4000/speakers');
-                setSpeakers(response.data);
-                setStatus(REQUEST_STATUS.SUCCESS);
+                const response = await axios.get(SPEAKER_URL);
+                dispatch({
+                    speakers: response.data,
+                    type: GET_ALL_SUCCESS
+                });
             } catch (e) {
-                setStatus(REQUEST_STATUS.ERROR);
+                dispatch({
+                    status: REQUEST_STATUS.ERROR,
+                    type: GET_ALL_FAILURE
+                })
                 setError(e);
             }
         };
