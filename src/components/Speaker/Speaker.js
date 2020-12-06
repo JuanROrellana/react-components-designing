@@ -1,8 +1,9 @@
 import React from 'react';
+import ErrorBoundary from "../ErrorBoundary/ErrorBoundary";
 import SpeakerFavoriteButton from "../SpeakerFavoriteButton/SpeakerFavoriteButton";
 import SpeakerImage from "../SpeakerImage/SpeakerImage";
 
-export default function Speaker ({id, firstName, lastName, bio, isFavorite, onFavoriteToggle}) {
+function SpeakerComponent ({id, firstName, lastName, bio, isFavorite, onFavoriteToggle}) {
     return (
         <div className="rounded overflow-hidden shadow-lg p-6" key={id}>
             <div className="grid grid-cols-4 mb-6">
@@ -18,3 +19,13 @@ export default function Speaker ({id, firstName, lastName, bio, isFavorite, onFa
         </div>
     );
  }
+
+const Speaker = (props) => {
+    return (
+        <ErrorBoundary>
+            <SpeakerComponent {...props}/>
+        </ErrorBoundary>
+    );
+}
+
+export default Speaker;
